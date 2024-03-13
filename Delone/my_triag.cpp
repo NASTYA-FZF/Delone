@@ -12,15 +12,6 @@ std::vector<point> gen_point(int N, double error, double left_x, double right_x,
         my_point[i].y = myrand(bottom_y, top_y) + myrand(-error, error);
         my_point[i].st_pt = add;
     }
-    //vector<point> my_point;
-    //for (double i = 0; i < 1; i += 0.1)
-    //{
-    //    for (double j = 0; j < 1; j += 0.1)
-    //    {
-    //        my_point.push_back(point(i + myrand(-error, error), j + myrand(-error, error), add));
-    //    }
-    //}
-
     return my_point;
 }
 
@@ -211,14 +202,16 @@ bool triangulation::add_or_not(point& ctrl, double step)
     if (res)
     {
         my_point.push_back(ctrl);
-        //N++;
     }
 
-    if (ctrl.x + step >= 1) ctrl = point(step + myrand(-error, error), ctrl.y + step + myrand(-error, error), pt_new);
+    double fi_start = 0;
+    if (ctrl.x + step >= 1)
+    {
+        ctrl = point(step + myrand(-error, error), ctrl.y + step + myrand(-error, error), pt_new);
+        ctrl.fi = fi_start;
+        ctrl.is_granica = not_granica;
+    }
     else ctrl.x += step + myrand(-error, error);
-
-    //if (ctrl.y + step >= 1) ctrl = point(ctrl.x + step + myrand(-error, error), step + myrand(-error, error), pt_new);
-    //else ctrl.y += step + myrand(-error, error);
 
     return res;
 }
@@ -238,46 +231,6 @@ triangulation::triangulation(std::vector<my_ellipse> ell, double stepfi, double 
     error = 1e-3;
     InitializeCriticalSection(&csTriag);
 
-    //radiusOkr = 0.4;
-    //centerOkr.y = centerOkr.x = 0.5;
-
-    //my_point.push_back(point(myrand(-error, error), myrand(-error, error), sverh));
-    //my_point.push_back(point(myrand(-error, error), 1 + myrand(-error, error), sverh));
-    //my_point.push_back(point(1 + myrand(-error, error), myrand(-error, error), sverh));
-    //my_point.push_back(point(1 + myrand(-error, error), 1 + myrand(-error, error), sverh));
-
-    //point na_el;
-    //for (auto el : ells)
-    //{
-    //    //my_point.push_back(point(el.center.x + myrand(-error, error), el.center.y + myrand(-error, error), sverh));
-    //    //my_point.push_back(point(el.Ac.x + myrand(-error, error), el.Ac.y + myrand(-error, error), sverh));
-    //    my_point.push_back(point(el.Bc.x + myrand(-error, error), el.Bc.y + myrand(-error, error), sverh));
-
-    //    for (double fi = 0.; fi <= 2 * M_PI + stepfi * 4; fi += stepfi * 3)
-    //    {
-    //        na_el = el.koordnew(fi);
-    //        my_point.push_back(point(na_el.x + myrand(-error, error), na_el.y + myrand(-error, error), add));
-    //    }
-    //}
-
-    //for (double fi = 0.; fi < 2 * M_PI; fi += stepfi)
-    //{
-    //    my_point.push_back(point(radiusOkr * cos(fi) + centerOkr.x + myrand(-error, error), radiusOkr * sin(fi) + centerOkr.y + myrand(-error, error), add));
-    //    //for (auto el : ells)
-    //    //{
-    //    //    na_el = el.koordnew(fi);
-    //    //    my_point.push_back(point(na_el.x + myrand(-error, error), na_el.y + myrand(-error, error), add));
-    //    //}
-    //}
-
-    //for (double x = 0; x < 1; x += step_setka)
-    //{
-    //    for (double y = 0; y < 1; y += step_setka)
-    //    {
-    //        pryam_setka.push_back(point(x, y, pt_new));
-    //    }
-    //}
-
     my_point.push_back(point(0, 0, sverh));
     my_point.push_back(point(0, 1, sverh));
     my_point.push_back(point(1, 0, sverh));
@@ -286,8 +239,10 @@ triangulation::triangulation(std::vector<my_ellipse> ell, double stepfi, double 
     point na_el;
     for (auto& el : ells)
     {
+        double ficur = el.fi_pot;
         el.teta = el.teta * M_PI / 180;
         el = my_ellipse(el.center, el.a, el.e, el.teta);
+        el.fi_pot = ficur;
 
         my_point.push_back(point(el.center.x, el.center.y, sverh));
         if (el.e >= 0.7)
@@ -308,28 +263,21 @@ triangulation::triangulation(std::vector<my_ellipse> ell, double stepfi, double 
             }
         }
 
-        //my_point.push_back(point(el.Ac.x, el.Ac.y, sverh));
-        //my_point.push_back(point(el.Bc.x, el.Bc.y, sverh));
-
         for (double fi = 0.; fi <= 2 * M_PI + stepfi * 4; fi += stepfi * 3)
         {
             na_el = el.koordnew(fi);
             my_point.push_back(point(na_el.x, na_el.y, add));
+            my_point.back().fi = el.fi_pot;
+            my_point.back().is_granica = granica;
         }
     }
 
     for (double fi = 0.; fi < 2 * M_PI; fi += stepfi)
     {
         my_point.push_back(point(radiusOkr * cos(fi) + centerOkr.x + myrand(-error, error), radiusOkr * sin(fi) + centerOkr.y + myrand(-error, error), add));
+        my_point.back().fi = fi_okr;
+        my_point.back().is_granica = granica;
     }
-
-    //for (double x = 0; x < 1; x += step_setka)
-    //{
-    //    for (double y = 0; y < 1; y += step_setka)
-    //    {
-    //        pryam_setka.push_back(point(x, y, pt_new));
-    //    }
-    //}
 }
 
 void triangulation::delone_triag()
@@ -340,8 +288,6 @@ void triangulation::delone_triag()
     bool add_triag = true;
     bool only_back = false;
     N = my_point.size();
-
-    //for (int i = 0; i < 4 + 3 * ells.size(); i++) my_point[i].st_pt = sverh;
 
     quality_center = 0;
     quality_med = 0;
@@ -379,7 +325,6 @@ void triangulation::delone_triag()
                     else cur_triangle.st_tr = crush;
 
                     my_setka.push_back(cur_triangle);
-                    //CalcQuality(cur_triangle.p1, cur_triangle.p2, cur_triangle.p3);
                     LeaveCriticalSection(&csTriag);
                 }
                 add_triag = true;
@@ -458,14 +403,15 @@ double triangulation::Sred(double a, double b, double c)
 void triangulation::rekkurent_delone_triag(double step_setka)
 {
     delone_triag();
+    double fi_start = 0;
     point add_point(step_setka + myrand(-error, error), step_setka + myrand(-error, error), pt_new);
+    add_point.fi = fi_start;
+    add_point.is_granica = not_granica;
     int iter = 0;
     while (true)
     {
         if (add_point.y > centerOkr.y + radiusOkr) break;
         if (!add_or_not(add_point, step_setka)) continue;
-        //add_point = point(0.39 + myrand(-error, error), 0.5 + myrand(-error, error), pt_new);
-        //my_point.push_back(add_point);
         delete_crush();
         delone_triag();
         iter++;
@@ -482,9 +428,8 @@ void triangulation::delete_crush()
         {
             for (int j = 0; j < my_point.size(); j++)
             {
-                if (my_point[j] == my_setka[i].p1 || my_point[j] == my_setka[i].p2 || my_point[j] == my_setka[i].p3
-                    /*|| my_setka[i].p1.st_pt != sverh || my_setka[i].p2.st_pt != sverh
-                    || my_setka[i].p3.st_pt != sverh*/) my_point[j].st_pt = (my_point[j].st_pt == sverh) ? sverh : add;
+                if (my_point[j] == my_setka[i].p1 || my_point[j] == my_setka[i].p2 || my_point[j] == my_setka[i].p3)
+                    my_point[j].st_pt = (my_point[j].st_pt == sverh) ? sverh : add;
             }
             my_setka.erase(my_setka.begin() + i);
             i--;
@@ -580,4 +525,117 @@ bool my_ellipse::Vnutri(point ctrl)
 void my_ellipse::new_b()
 {
     b = sqrt(a * a - e * e * a * a);
+}
+
+galerkin::galerkin(std::vector<point> pts, std::vector<triangle> trings)
+{
+    my_point = pts;
+    my_triag = trings;
+    count_not_granica = 0;
+    for (int i = 0; i < my_point.size(); i++)
+    {
+        if (!my_point[i].number_triag.empty()) my_point[i].number_triag.clear();
+        if (my_point[i].is_granica == not_granica) count_not_granica++;
+        for (int j = 0; j < my_triag.size(); j++)
+        {
+            if (my_point[i] == my_triag[j].p1 ||
+                my_point[i] == my_triag[j].p2 ||
+                my_point[i] == my_triag[j].p3) my_point[i].number_triag.push_back(j);
+        }
+    }
+    InitializeCriticalSection(&cs);
+    Aij = vector<vector<double>>(count_not_granica, vector<double>(count_not_granica));
+    Rj = Fij = vector<double>(count_not_granica);
+}
+
+ij galerkin::two_point(point pt1, point pt2, std::vector<int>& num_triag)
+{
+    if (pt1 == pt2)
+    {
+        num_triag = pt1.number_triag;
+        return iravenj;
+    }
+    num_triag.clear();
+    for (int i = 0; i < pt1.number_triag.size(); i++)
+    {
+        for (int j = 0; j < pt2.number_triag.size(); j++)
+        {
+            if (pt1.number_triag[i] == pt2.number_triag[j]) 
+                num_triag.push_back(pt1.number_triag[i]);
+        }
+    }
+
+    if (num_triag.empty()) return ij0;
+    else return isosedj;
+}
+
+void galerkin::Vnutiravenj(point pt, std::vector<int> num_triag, int row, int column)
+{
+    for (int i = 0; i < num_triag.size(); i++)
+    {
+        if (my_triag[num_triag[i]].p1 == pt) my_triag[num_triag[i]].p1.z = 1.;
+        else my_triag[num_triag[i]].p1.z = 0.;
+
+        if (my_triag[num_triag[i]].p2 == pt) my_triag[num_triag[i]].p2.z = 1.;
+        else my_triag[num_triag[i]].p2.z = 0.;
+
+        if (my_triag[num_triag[i]].p3 == pt) my_triag[num_triag[i]].p3.z = 1.;
+        else my_triag[num_triag[i]].p3.z = 0.;
+    }
+
+    double A, B, St;
+    for (int i = 0; i < num_triag.size(); i++)
+    {
+        A = Aplos(my_triag[num_triag[i]].p1, my_triag[num_triag[i]].p2, my_triag[num_triag[i]].p3);
+        B = Bplos(my_triag[num_triag[i]].p1, my_triag[num_triag[i]].p2, my_triag[num_triag[i]].p3);
+        St = Striag(my_triag[num_triag[i]].p1, my_triag[num_triag[i]].p2, my_triag[num_triag[i]].p3);
+        Aij[row][column] += (A * A + B * B) * St;
+    }
+}
+
+double galerkin::Aplos(double y1, double y2, double y3, double z1, double z2, double z3)
+{
+    return (y2 - y1) * (z3 - z1) - (y3 - y1) * (z2 - z1);
+}
+
+double galerkin::Bplos(double x1, double x2, double x3, double z1, double z2, double z3)
+{
+    return (x2 - x1) * (z3 - z1) - (z2 - z1) * (x3 - x1);
+}
+
+double galerkin::Aplos(point pt1, point pt2, point pt3)
+{
+    return (pt2.y - pt1.y) * (pt3.z - pt1.z) - (pt3.y - pt1.y) * (pt2.z - pt1.z);
+}
+
+double galerkin::Bplos(point pt1, point pt2, point pt3)
+{
+    return (pt2.x - pt1.x) * (pt3.z - pt1.z) - (pt2.z - pt1.z) * (pt3.x - pt1.x);
+}
+
+double galerkin::Striag(point pt1, point pt2, point pt3)
+{
+    double ast = radiusOp(pt1, pt2);
+    double bst = radiusOp(pt1, pt3);
+    double cst = radiusOp(pt2, pt3);
+    double polup = (ast + bst + cst) / 2.;
+    return sqrt(polup * (polup - ast) * (polup - bst) * (polup - cst));
+}
+
+void galerkin::Vnutisosedj(point pti, point ptj, std::vector<int> num_triag, int row, int column)
+{
+    /*triangle tri1, tri2;
+    tri1.p1 = pti; tri2.p1 = ptj;*/
+    for (int i = 0; i < num_triag.size(); i++)
+    {
+        if (my_triag[num_triag[i]].p1 == pti || my_triag[num_triag[i]].p1 == ptj) my_triag[num_triag[i]].p1.z = 1.;
+        else my_triag[num_triag[i]].p1.z = 0.;
+
+        if (my_triag[num_triag[i]].p2 == pti || my_triag[num_triag[i]].p2 == ptj) my_triag[num_triag[i]].p2.z = 1.;
+        else my_triag[num_triag[i]].p2.z = 0.; 
+
+        if (my_triag[num_triag[i]].p3 == pti || my_triag[num_triag[i]].p3 == ptj) my_triag[num_triag[i]].p3.z = 1.;
+        else my_triag[num_triag[i]].p3.z = 0.;
+    }
+
 }

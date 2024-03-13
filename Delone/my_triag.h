@@ -26,9 +26,11 @@ struct point
 {
 	double x;
 	double y;
+	double z;
 	status st_pt;
 	double fi;
 	polog_pt is_granica;
+	std::vector<int> number_triag;
 	point(double _x, double _y, status stat);
 	point() {}
 	point(point pt, status stat);
@@ -41,8 +43,6 @@ struct triangle
 	point p3;
 	double radiusOpis;
 	point centerOpis;
-	double radiusVpis;
-	point centerVpis;
 	status_triag st_tr;
 };
 
@@ -55,7 +55,7 @@ struct my_ellipse
 	double teta;
 	double c;
 	double e;
-	double fi;
+	double fi_pot;
 	my_ellipse() {}
 	my_ellipse(point center_, double a_, double e_, double teta_);
 	point koordnew(double fi);
@@ -142,3 +142,44 @@ bool operator==(const point& left, const point& right);
 
 // метод Качмаржа
 void kazf(std::vector<std::vector<double>> a, std::vector<double> b, std::vector<double>&x);
+
+enum ij
+{
+	iravenj,
+	isosedj,
+	ij0,
+};
+
+class galerkin
+{
+	std::vector<point> my_point;
+	std::vector<triangle> my_triag;
+	int count_not_granica;
+	std::vector<std::vector<double>> Aij;
+	std::vector<double> Rj, Fij;
+
+public:
+	CRITICAL_SECTION cs;
+
+	galerkin(std::vector<point> pts, std::vector<triangle> trings);
+
+	galerkin() {}
+
+	~galerkin() { DeleteCriticalSection(&cs); }
+
+	ij two_point(point pt1, point pt2, std::vector<int>& num_triag);
+
+	void Vnutiravenj(point pt, std::vector<int> num_triag, int row, int column);
+
+	double Aplos(double y1, double y2, double y3, double z1, double z2, double z3);
+
+	double Bplos(double x1, double x2, double x3, double z1, double z2, double z3);
+
+	double Aplos(point pt1, point pt2, point pt3);
+
+	double Bplos(point pt1, point pt2, point pt3);
+
+	double Striag(point pt1, point pt2, point pt3);
+
+	void Vnutisosedj(point pti, point ptj, std::vector<int> num_triag, int row, int column);
+};

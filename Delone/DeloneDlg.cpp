@@ -24,7 +24,7 @@ CDeloneDlg::CDeloneDlg(CWnd* pParent /*=nullptr*/)
 	, error(1e-3)
 	, step_fi(0.1)
 	, step_setka(0.1)
-	, fi_okr(0)
+	, fi_okr(1)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -89,7 +89,11 @@ BOOL CDeloneDlg::OnInitDialog()
 	rb_no_rekkur.SetCheck(BST_CHECKED);
 	rekkur = false;
 	srand(time(NULL));
-	manyTriag.ells.push_back(my_ellipse(point(my_delone.centerOkr.x, my_delone.centerOkr.y, sverh), my_delone.radiusOkr, 0, 0));
+
+	my_ellipse add_ell(point(my_delone.centerOkr.x, my_delone.centerOkr.y, sverh), my_delone.radiusOkr, 0, 0);
+	add_ell.fi_pot = 1;
+
+	manyTriag.ells.push_back(add_ell);
 	e_ell.SetRange(0, 90);
 	e_ell.SetPos(50);
 	teta_ell.SetRange(0, M_PI * 100);
@@ -106,9 +110,11 @@ BOOL CDeloneDlg::OnInitDialog()
 	ed_di.ShowWindow(SW_HIDE);
 	ed_setka.ShowWindow(SW_HIDE);
 
-	my_ellipse add_ell(point(0.4, 0.4, add), 0.05, (double)e_ell.GetPos() / 100, (double)teta_ell.GetPos() / 100 * 180. / M_PI);
+	add_ell = my_ellipse(point(0.4, 0.4, add), 0.05, (double)e_ell.GetPos() / 100, (double)teta_ell.GetPos() / 100 * 180. / M_PI);
+	add_ell.fi_pot = 1;
 	manyTriag.ells.push_back(add_ell);
 	add_ell.center.x = 0.6;
+	add_ell.fi_pot = -1;
 	manyTriag.ells.push_back(add_ell);
 	number_ell.InsertString(-1, L"1");
 	number_ell.InsertString(-1, L"2");
@@ -180,8 +186,6 @@ void CDeloneDlg::OnBnClickedButton1()
 			MessageBox(L"Нажмите Enter!", L"Оповещение!");
 			return;
 		}
-		//std::vector<my_ellipse> el({ my_ellipse(point(0.3, 0.6, add), 0.1 , 0.05, 2)});
-		///*std::vector<my_ellipse>*/ el.push_back({ my_ellipse(point(0.6, 0.3, add), 0.11, 0.9, -2) });
 		manyTriag.do_triag = true;
 		std::vector<my_ellipse> el(manyTriag.ells);
 		el.erase(el.begin());
@@ -218,6 +222,7 @@ DWORD __stdcall findTriag(PVOID p)
 
 	if (!my->rekkur) my->my_delone.delone_triag();
 	else my->my_delone.rekkurent_delone_triag(my->step_setka);
+	galerkin potencial(my->my_delone.GetPoint(), my->my_delone.GetTriangle());
 	return 0;
 }
 
@@ -287,12 +292,6 @@ void CDeloneDlg::OnBnClickedRadio2()
 void CDeloneDlg::OnBnClickedButton2()
 {
 	// TODO: добавьте свой код обработчика уведомлений
-	//if (manyTriag.add_ellips)
-	//{
-	//	MessageBox(L"Нажмите Enter!", L"Оповещение!");
-	//	return;
-	//}
-
 	manyTriag.do_triag = false;
 	manyTriag.my_line.clear();
 	manyTriag.my_point.clear();
@@ -308,6 +307,7 @@ void CDeloneDlg::OnBnClickedButton2()
 	{
 		manyTriag.cur_ell = manyTriag.ells.size();
 		my_ellipse add_ell(point(myrand(0, 1), myrand(0, 1), add), 0.05, (double)e_ell.GetPos() / 100, (double)teta_ell.GetPos() / 100 * 180. / M_PI);
+		add_ell.fi_pot = 1;
 		manyTriag.ells.push_back(add_ell);
 		if (!manyTriag.goodEll())
 		{
