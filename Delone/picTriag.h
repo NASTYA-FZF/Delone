@@ -2,7 +2,7 @@
 #include "my_triag.h"
 #include <gdiplus.h>
 // picTriag
-typedef std::pair<point, point> line;
+
 
 class picTriag : public CStatic
 {
@@ -20,7 +20,7 @@ protected:
 public:
 	virtual void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
 	//std::set<line> my_line;
-	std::vector<line> my_line;
+	std::vector<line> my_line, my_izoline;
 	std::vector<point> my_point;
 	ULONG_PTR token;
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
@@ -46,7 +46,7 @@ public:
 	double otstup;
 	int cur_ell;
 	bool goodEll();
-	bool regim, do_triag;
+	bool regim, do_triag, draw_setka;
 };
 
 bool operator<(const line& left, const line& right);

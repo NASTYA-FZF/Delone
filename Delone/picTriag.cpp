@@ -39,6 +39,7 @@ picTriag::picTriag()
 	draw_pt = true;
 	regim = true;
 	do_triag = false;
+	draw_setka = true;
 	cur_ell = ells.size() - 1;
 }
 
@@ -128,12 +129,26 @@ void picTriag::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	matr.Scale(Xscale, -Yscale);
 	PointF pt[2];
 
-	for (auto n : my_line)
+	if (draw_setka)
 	{
-		pt[0] = PointF(n.first.x, n.first.y);
-		pt[1] = PointF(n.second.x, n.second.y);
-		matr.TransformPoints(pt, 2);
-		draw_in_buffer.DrawLine(&p_black, pt[0], pt[1]);
+		for (auto n : my_line)
+		{
+			pt[0] = PointF(n.first.x, n.first.y);
+			pt[1] = PointF(n.second.x, n.second.y);
+			matr.TransformPoints(pt, 2);
+			draw_in_buffer.DrawLine(&p_black, pt[0], pt[1]);
+		}
+	}
+
+	if (!my_izoline.empty())
+	{
+		for (auto n : my_izoline)
+		{
+			pt[0] = PointF(n.first.x, n.first.y);
+			pt[1] = PointF(n.second.x, n.second.y);
+			matr.TransformPoints(pt, 2);
+			draw_in_buffer.DrawLine(&p_purp, pt[0], pt[1]);
+		}
 	}
 
 	if (draw_pt)

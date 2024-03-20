@@ -36,6 +36,8 @@ struct point
 	point(point pt, status stat);
 };
 
+typedef std::pair<point, point> line;
+
 struct triangle
 {
 	point p1;
@@ -44,6 +46,7 @@ struct triangle
 	double radiusOpis;
 	point centerOpis;
 	status_triag st_tr;
+	double S;
 };
 
 struct my_ellipse
@@ -157,15 +160,31 @@ class galerkin
 	int count_not_granica;
 	std::vector<std::vector<double>> Aij;
 	std::vector<double> Rj, Fij;
+	std::vector<line> izoline;
+	std::vector<double> fi_const;
+
+protected:
+
+	void SetxyzTriag(triangle& tri, point pt);
+
+	void SetTriagPoint();
+
+	double izox(point pt1, point pt2, double ficonst);
+
+	double izoy(point pt1, point pt2, double ficonst);
+
+	void FindIzoline();
 
 public:
 	CRITICAL_SECTION cs;
 
-	galerkin(std::vector<point> pts, std::vector<triangle> trings);
+	galerkin(std::vector<point> pts, std::vector<triangle> trings, int num_fi_const);
+
+	void Set(std::vector<point> pts, std::vector<triangle> trings, int num_fi_const);
 
 	galerkin() {}
 
-	~galerkin() { DeleteCriticalSection(&cs); }
+	~galerkin() { /*DeleteCriticalSection(&cs);*/ }
 
 	ij two_point(point pt1, point pt2, std::vector<int>& num_triag);
 
@@ -181,5 +200,15 @@ public:
 
 	double Striag(point pt1, point pt2, point pt3);
 
-	void Vnutisosedj(point pti, point ptj, std::vector<int> num_triag, int row, int column);
+	void Funcisosedj(point pti, point ptj, std::vector<int> num_triag, int row, int column);
+
+	void FindFi();
+
+	std::vector<line> GetIzoline();
+
+	int GetNumIzoline();
+
+	void SetFiConst(int num_izoline);
+
+	void FindIzoline(int num_izoline);
 };

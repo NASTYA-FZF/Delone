@@ -480,6 +480,8 @@ point::point(double _x, double _y, status stat)
     x = _x;
     y = _y;
     st_pt = stat;
+    fi = 0;
+    number_triag.clear();
 }
 
 point::point(point pt, status stat)
@@ -527,11 +529,124 @@ void my_ellipse::new_b()
     b = sqrt(a * a - e * e * a * a);
 }
 
-galerkin::galerkin(std::vector<point> pts, std::vector<triangle> trings)
+void galerkin::SetxyzTriag(triangle& tri, point pt)
+{
+    if (tri.p1 == pt) tri.p1.z = 1.;
+    else tri.p1.z = 0.;
+
+    if (tri.p2 == pt) tri.p2.z = 1.;
+    else tri.p2.z = 0.;
+
+    if (tri.p3 == pt) tri.p3.z = 1.;
+    else tri.p3.z = 0.;
+}
+
+void galerkin::SetTriagPoint()
+{
+    double first = my_point.size() - count_not_granica;
+    vector<int> my_num;
+    for (int i = 0; i < Fij.size(); i++)
+    {
+        my_point[i + first].fi = Fij[i];
+        my_num = my_point[i + first].number_triag;
+        for (int j = 0; j < my_num.size(); j++)
+        {
+            if (my_triag[my_num[j]].p1 == my_point[i + first])
+                my_triag[my_num[j]].p1.fi = Fij[i];
+            if (my_triag[my_num[j]].p2 == my_point[i + first])
+                my_triag[my_num[j]].p2.fi = Fij[i];
+            if (my_triag[my_num[j]].p3 == my_point[i + first])
+                my_triag[my_num[j]].p3.fi = Fij[i];
+        }
+    }
+}
+
+void galerkin::FindIzoline()
+{
+    izoline.clear();
+    vector<point> pt;
+    double x, y;
+
+    for (auto tri : my_triag)
+    {
+        for (auto fic : fi_const)
+        {
+            pt.clear();
+            //point 1 and point 2
+            if ((fic > tri.p1.fi && fic < tri.p2.fi)
+                || (fic < tri.p1.fi && fic > tri.p2.fi))
+            {
+                x = izox(tri.p1, tri.p2, fic);
+                y = izoy(tri.p1, tri.p2, fic);
+                pt.push_back(point(x, y, add));
+            }
+            /*else
+                if (fic <= tri.p1.fi && fic >= tri.p2.fi)
+                {
+                    x = izox(tri.p2, tri.p1, fic);
+                    y = izoy(tri.p2, tri.p1, fic);
+                    pt.push_back(point(x, y, add));
+                }*/
+
+            //point 1 and point 3
+            if ((fic > tri.p1.fi && fic < tri.p3.fi)
+                || (fic < tri.p1.fi && fic > tri.p3.fi))
+            {
+                x = izox(tri.p1, tri.p3, fic);
+                y = izoy(tri.p1, tri.p3, fic);
+                pt.push_back(point(x, y, add));
+            }
+            /*else
+                if (fic <= tri.p1.fi && fic >= tri.p3.fi)
+                {
+                    x = izox(tri.p3, tri.p1, fic);
+                    y = izoy(tri.p3, tri.p1, fic);
+                    pt.push_back(point(x, y, add));
+                }*/
+
+            //point 2 and point 3
+            if ((fic > tri.p3.fi && fic < tri.p2.fi)
+                || (fic < tri.p3.fi && fic > tri.p2.fi))
+            {
+                x = izox(tri.p3, tri.p2, fic);
+                y = izoy(tri.p3, tri.p2, fic);
+                pt.push_back(point(x, y, add));
+            }
+            //else
+            //    if (fic <= tri.p3.fi && fic >= tri.p2.fi)
+            //    {
+            //        x = izox(tri.p2, tri.p3, fic);
+            //        y = izoy(tri.p2, tri.p3, fic);
+            //        pt.push_back(point(x, y, add));
+            //    }
+
+            EnterCriticalSection(&cs);
+            if (pt.size() == 2)
+                izoline.push_back(line(pt[0], pt[1]));
+            LeaveCriticalSection(&cs);
+        }
+    }
+}
+
+double galerkin::izox(point pt1, point pt2, double ficonst)
+{
+    return pt2.x - (pt2.fi - ficonst) * ((pt2.x - pt1.x) / (pt2.fi - pt1.fi));;
+}
+
+double galerkin::izoy(point pt1, point pt2, double ficonst)
+{
+    return pt2.y - (pt2.fi - ficonst) * ((pt2.y - pt1.y) / (pt2.fi - pt1.fi));
+}
+
+galerkin::galerkin(std::vector<point> pts, std::vector<triangle> trings, int num_fi_const)
 {
     my_point = pts;
     my_triag = trings;
+    for (auto& tri : my_triag)
+        tri.S = Striag(tri.p1, tri.p2, tri.p3);
+
     count_not_granica = 0;
+    double fi_max = 0, fi_min = 0;
     for (int i = 0; i < my_point.size(); i++)
     {
         if (!my_point[i].number_triag.empty()) my_point[i].number_triag.clear();
@@ -542,10 +657,50 @@ galerkin::galerkin(std::vector<point> pts, std::vector<triangle> trings)
                 my_point[i] == my_triag[j].p2 ||
                 my_point[i] == my_triag[j].p3) my_point[i].number_triag.push_back(j);
         }
+
+        if (my_point[i].fi > fi_max) fi_max = my_point[i].fi;
+        if (my_point[i].fi < fi_min) fi_min = my_point[i].fi;
     }
-    InitializeCriticalSection(&cs);
+    //InitializeCriticalSection(&cs);
     Aij = vector<vector<double>>(count_not_granica, vector<double>(count_not_granica));
     Rj = Fij = vector<double>(count_not_granica);
+    fi_const.clear();
+
+    for (double my_fi = fi_min; my_fi < fi_max; my_fi += (fi_max - fi_min) / num_fi_const)
+        fi_const.push_back(my_fi);
+}
+
+void galerkin::Set(std::vector<point> pts, std::vector<triangle> trings, int num_fi_const)
+{
+    my_point = pts;
+    my_triag = trings;
+    for (auto& tri : my_triag)
+        tri.S = Striag(tri.p1, tri.p2, tri.p3);
+
+    count_not_granica = 0;
+    double fi_max = 0, fi_min = 0;
+    for (int i = 0; i < my_point.size(); i++)
+    {
+        if (!my_point[i].number_triag.empty()) my_point[i].number_triag.clear();
+        if (my_point[i].is_granica == not_granica) count_not_granica++;
+        for (int j = 0; j < my_triag.size(); j++)
+        {
+            if (my_point[i] == my_triag[j].p1 ||
+                my_point[i] == my_triag[j].p2 ||
+                my_point[i] == my_triag[j].p3) my_point[i].number_triag.push_back(j);
+        }
+
+        if (my_point[i].fi > fi_max) fi_max = my_point[i].fi;
+        if (my_point[i].fi < fi_min) fi_min = my_point[i].fi;
+    }
+    //InitializeCriticalSection(&cs);
+    Aij = vector<vector<double>>(count_not_granica, vector<double>(count_not_granica));
+    Rj = Fij = vector<double>(count_not_granica);
+    fi_const.clear();
+    izoline.clear();
+
+    for (double my_fi = fi_min; my_fi < fi_max; my_fi += (fi_max - fi_min) / num_fi_const)
+        fi_const.push_back(my_fi);
 }
 
 ij galerkin::two_point(point pt1, point pt2, std::vector<int>& num_triag)
@@ -571,26 +726,20 @@ ij galerkin::two_point(point pt1, point pt2, std::vector<int>& num_triag)
 
 void galerkin::Vnutiravenj(point pt, std::vector<int> num_triag, int row, int column)
 {
+    double A, B;
     for (int i = 0; i < num_triag.size(); i++)
     {
-        if (my_triag[num_triag[i]].p1 == pt) my_triag[num_triag[i]].p1.z = 1.;
-        else my_triag[num_triag[i]].p1.z = 0.;
-
-        if (my_triag[num_triag[i]].p2 == pt) my_triag[num_triag[i]].p2.z = 1.;
-        else my_triag[num_triag[i]].p2.z = 0.;
-
-        if (my_triag[num_triag[i]].p3 == pt) my_triag[num_triag[i]].p3.z = 1.;
-        else my_triag[num_triag[i]].p3.z = 0.;
-    }
-
-    double A, B, St;
-    for (int i = 0; i < num_triag.size(); i++)
-    {
+        SetxyzTriag(my_triag[num_triag[i]], pt);
         A = Aplos(my_triag[num_triag[i]].p1, my_triag[num_triag[i]].p2, my_triag[num_triag[i]].p3);
         B = Bplos(my_triag[num_triag[i]].p1, my_triag[num_triag[i]].p2, my_triag[num_triag[i]].p3);
-        St = Striag(my_triag[num_triag[i]].p1, my_triag[num_triag[i]].p2, my_triag[num_triag[i]].p3);
-        Aij[row][column] += (A * A + B * B) * St;
+        Aij[row][column] += (A * A + B * B) * my_triag[num_triag[i]].S;
     }
+    //for (int i = 0; i < num_triag.size(); i++)
+    //{
+    //    A = Aplos(my_triag[num_triag[i]].p1, my_triag[num_triag[i]].p2, my_triag[num_triag[i]].p3);
+    //    B = Bplos(my_triag[num_triag[i]].p1, my_triag[num_triag[i]].p2, my_triag[num_triag[i]].p3);
+    //    Aij[row][column] += (A * A + B * B) * my_triag[num_triag[i]].S;
+    //}
 }
 
 double galerkin::Aplos(double y1, double y2, double y3, double z1, double z2, double z3)
@@ -622,20 +771,84 @@ double galerkin::Striag(point pt1, point pt2, point pt3)
     return sqrt(polup * (polup - ast) * (polup - bst) * (polup - cst));
 }
 
-void galerkin::Vnutisosedj(point pti, point ptj, std::vector<int> num_triag, int row, int column)
+void galerkin::Funcisosedj(point pti, point ptj, std::vector<int> num_triag, int row, int column)
 {
-    /*triangle tri1, tri2;
-    tri1.p1 = pti; tri2.p1 = ptj;*/
+    bool R_or_A = false;
+    double Ai, Bi, Aj, Bj, summa = 0.;
+
+    if (pti.is_granica == granica || ptj.is_granica == granica)
+        R_or_A = true;
+
     for (int i = 0; i < num_triag.size(); i++)
     {
-        if (my_triag[num_triag[i]].p1 == pti || my_triag[num_triag[i]].p1 == ptj) my_triag[num_triag[i]].p1.z = 1.;
-        else my_triag[num_triag[i]].p1.z = 0.;
+        SetxyzTriag(my_triag[num_triag[i]], pti);
+        Ai = Aplos(my_triag[num_triag[i]].p1, my_triag[num_triag[i]].p2, my_triag[num_triag[i]].p3);
+        Bi = Bplos(my_triag[num_triag[i]].p1, my_triag[num_triag[i]].p2, my_triag[num_triag[i]].p3);
 
-        if (my_triag[num_triag[i]].p2 == pti || my_triag[num_triag[i]].p2 == ptj) my_triag[num_triag[i]].p2.z = 1.;
-        else my_triag[num_triag[i]].p2.z = 0.; 
+        SetxyzTriag(my_triag[num_triag[i]], ptj);
+        Aj = Aplos(my_triag[num_triag[i]].p1, my_triag[num_triag[i]].p2, my_triag[num_triag[i]].p3);
+        Bj = Bplos(my_triag[num_triag[i]].p1, my_triag[num_triag[i]].p2, my_triag[num_triag[i]].p3);
 
-        if (my_triag[num_triag[i]].p3 == pti || my_triag[num_triag[i]].p3 == ptj) my_triag[num_triag[i]].p3.z = 1.;
-        else my_triag[num_triag[i]].p3.z = 0.;
+        if (R_or_A)
+            summa += (Ai * Aj + Bi * Bj) * my_triag[num_triag[i]].S;
+        else 
+            Aij[row][column] += (Ai * Aj + Bi * Bj) * my_triag[num_triag[i]].S;
     }
+    if (R_or_A)
+        Rj[row] += pti.fi * summa;
+}
 
+void galerkin::FindFi()
+{
+    vector<int> my_num_triag;
+    double first_vnut = my_point.size() - count_not_granica;
+    for (int numpt1 = first_vnut; numpt1 < my_point.size(); numpt1++)
+    {
+        for (int numpt2 = 0; numpt2 < my_point.size(); numpt2++)
+        {
+            switch (two_point(my_point[numpt2], my_point[numpt1], my_num_triag))
+            {
+            case ij0: 
+                if (numpt2 < first_vnut) Rj[numpt1 - first_vnut] += 0.;
+                else Aij[numpt1 - first_vnut][numpt2 - first_vnut] += 0.; break;
+            case iravenj:
+                Vnutiravenj(my_point[numpt1], my_num_triag, numpt1 - first_vnut, numpt2 - first_vnut); break;
+            case isosedj:
+                Funcisosedj(my_point[numpt2], my_point[numpt1], my_num_triag, numpt1 - first_vnut, numpt2 - first_vnut); break;
+            }
+        }
+    }
+    kazf(Aij, Rj, Fij);
+    SetTriagPoint();
+    FindIzoline();
+}
+
+std::vector<line> galerkin::GetIzoline()
+{
+    return izoline;
+}
+
+int galerkin::GetNumIzoline()
+{
+    return izoline.size();
+}
+
+void galerkin::SetFiConst(int num_izoline)
+{
+    double fi_max = 0, fi_min = 0;
+    for (int i = 0; i < my_point.size(); i++)
+    {
+        if (my_point[i].fi > fi_max) fi_max = my_point[i].fi;
+        if (my_point[i].fi < fi_min) fi_min = my_point[i].fi;
+    }
+    fi_const.clear();
+
+    for (double my_fi = fi_min; my_fi < fi_max; my_fi += (fi_max - fi_min) / num_izoline)
+        fi_const.push_back(my_fi);
+}
+
+void galerkin::FindIzoline(int num_izoline)
+{
+    SetFiConst(num_izoline);
+    FindIzoline();
 }

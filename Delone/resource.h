@@ -25,6 +25,13 @@
 #define IDC_STRFI                       1025
 #define IDC_STRSETKA                    1026
 #define IDC_EDIT7                       1028
+#define IDC_EDIT8                       1029
+#define IDC_EDIT9                       1030
+#define IDC_BUTTON3                     1031
+#define IDC_BUTTON4                     1032
+#define IDC_STFIELL                     1033
+#define IDC_STFIOKR                     1034
+#define IDC_STNUMIZO                    1035
 
 // Next default values for new objects
 // 
@@ -32,7 +39,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        130
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1029
+#define _APS_NEXT_CONTROL_VALUE         1036
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

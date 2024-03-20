@@ -72,6 +72,21 @@ public:
 	CStatic str_fi;
 	CButton but_clear;
 	double fi_okr;
+	galerkin potencial;
+	int num_izoline;
+	virtual void OnCancel();
+	double fi_ell;
+	afx_msg void OnEnChangeEdit9();
+	CButton but_draw_setka;
+	afx_msg void OnBnClickedButton3();
+	afx_msg void OnBnClickedButton4();
+	CButton but_draw_izo;
+	CEdit ed_fi_ell;
+	CStatic st_fi_ell;
+	CEdit ed_num_izo;
+	CEdit ed_fi_okr;
+	CStatic st_fi_okr;
+	CStatic st_num_izo;
 };
 
 DWORD WINAPI findTriag(PVOID p);

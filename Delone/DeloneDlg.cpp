@@ -25,6 +25,8 @@ CDeloneDlg::CDeloneDlg(CWnd* pParent /*=nullptr*/)
 	, step_fi(0.1)
 	, step_setka(0.1)
 	, fi_okr(1)
+	, num_izoline(0)
+	, fi_ell(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -57,6 +59,16 @@ void CDeloneDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STRSETKA, str_setka);
 	DDX_Control(pDX, IDC_STRFI, str_fi);
 	DDX_Text(pDX, IDC_EDIT7, fi_okr);
+	DDX_Text(pDX, IDC_EDIT8, num_izoline);
+	DDX_Text(pDX, IDC_EDIT9, fi_ell);
+	DDX_Control(pDX, IDC_BUTTON3, but_draw_setka);
+	DDX_Control(pDX, IDC_BUTTON4, but_draw_izo);
+	DDX_Control(pDX, IDC_EDIT9, ed_fi_ell);
+	DDX_Control(pDX, IDC_STFIELL, st_fi_ell);
+	DDX_Control(pDX, IDC_EDIT8, ed_num_izo);
+	DDX_Control(pDX, IDC_EDIT7, ed_fi_okr);
+	DDX_Control(pDX, IDC_STFIOKR, st_fi_okr);
+	DDX_Control(pDX, IDC_STNUMIZO, st_num_izo);
 }
 
 BEGIN_MESSAGE_MAP(CDeloneDlg, CDialogEx)
@@ -70,6 +82,9 @@ BEGIN_MESSAGE_MAP(CDeloneDlg, CDialogEx)
 //	ON_WM_KEYDOWN()
 ON_WM_HSCROLL()
 ON_CBN_SELCHANGE(IDC_COMBO1, &CDeloneDlg::OnCbnSelchangeCombo1)
+ON_EN_CHANGE(IDC_EDIT9, &CDeloneDlg::OnEnChangeEdit9)
+ON_BN_CLICKED(IDC_BUTTON3, &CDeloneDlg::OnBnClickedButton3)
+ON_BN_CLICKED(IDC_BUTTON4, &CDeloneDlg::OnBnClickedButton4)
 END_MESSAGE_MAP()
 
 
@@ -86,6 +101,7 @@ BOOL CDeloneDlg::OnInitDialog()
 
 	InitializeCriticalSection(&my_delone.csTriag);
 	InitializeCriticalSection(&cs);
+	InitializeCriticalSection(&potencial.cs);
 	rb_no_rekkur.SetCheck(BST_CHECKED);
 	rekkur = false;
 	srand(time(NULL));
@@ -111,13 +127,22 @@ BOOL CDeloneDlg::OnInitDialog()
 	ed_setka.ShowWindow(SW_HIDE);
 
 	add_ell = my_ellipse(point(0.4, 0.4, add), 0.05, (double)e_ell.GetPos() / 100, (double)teta_ell.GetPos() / 100 * 180. / M_PI);
-	add_ell.fi_pot = 1;
+	add_ell.fi_pot = 10;
 	manyTriag.ells.push_back(add_ell);
 	add_ell.center.x = 0.6;
-	add_ell.fi_pot = -1;
+	add_ell.fi_pot = -10;
 	manyTriag.ells.push_back(add_ell);
 	number_ell.InsertString(-1, L"1");
 	number_ell.InsertString(-1, L"2");
+
+	st_fi_okr.ShowWindow(SW_HIDE);
+	st_fi_ell.ShowWindow(SW_HIDE);
+	ed_fi_okr.ShowWindow(SW_HIDE);
+	ed_fi_ell.ShowWindow(SW_HIDE);
+	ed_num_izo.ShowWindow(SW_HIDE);
+	but_draw_izo.ShowWindow(SW_HIDE);
+	but_draw_setka.ShowWindow(SW_HIDE);
+	st_num_izo.ShowWindow(SW_HIDE);
 	// TODO: добавьте дополнительную инициализацию
 
 	return TRUE;  // возврат значения TRUE, если фокус не передан элементу управления
@@ -212,6 +237,11 @@ void CDeloneDlg::OnTimer(UINT_PTR nIDEvent)
 	quality_center.SetWindowTextW(str_quality);
 	LeaveCriticalSection(&my_delone.csTriag);
 
+	EnterCriticalSection(&potencial.cs);
+	manyTriag.my_izoline = potencial.GetIzoline();
+	LeaveCriticalSection(&potencial.cs);
+
+
 	Invalidate(FALSE);
 	CDialogEx::OnTimer(nIDEvent);
 }
@@ -222,7 +252,8 @@ DWORD __stdcall findTriag(PVOID p)
 
 	if (!my->rekkur) my->my_delone.delone_triag();
 	else my->my_delone.rekkurent_delone_triag(my->step_setka);
-	galerkin potencial(my->my_delone.GetPoint(), my->my_delone.GetTriangle());
+	my->potencial.Set(my->my_delone.GetPoint(), my->my_delone.GetTriangle(), my->num_izoline + 1);
+	my->potencial.FindFi();
 	return 0;
 }
 
@@ -255,6 +286,13 @@ void CDeloneDlg::OnBnClickedRadio1()
 	str_setka.ShowWindow(SW_SHOW);
 	ed_di.ShowWindow(SW_SHOW);
 	ed_setka.ShowWindow(SW_SHOW);
+
+	st_fi_okr.ShowWindow(SW_SHOW);
+	ed_fi_okr.ShowWindow(SW_SHOW);
+	ed_num_izo.ShowWindow(SW_SHOW);
+	st_num_izo.ShowWindow(SW_SHOW);
+	but_draw_izo.ShowWindow(SW_SHOW);
+	but_draw_setka.ShowWindow(SW_SHOW);
 }
 
 
@@ -286,12 +324,22 @@ void CDeloneDlg::OnBnClickedRadio2()
 	str_setka.ShowWindow(SW_HIDE);
 	ed_di.ShowWindow(SW_HIDE);
 	ed_setka.ShowWindow(SW_HIDE);
+
+	st_fi_okr.ShowWindow(SW_HIDE);
+	st_fi_ell.ShowWindow(SW_HIDE);
+	ed_fi_okr.ShowWindow(SW_HIDE);
+	ed_fi_ell.ShowWindow(SW_HIDE);
+	ed_num_izo.ShowWindow(SW_HIDE);
+	but_draw_izo.ShowWindow(SW_HIDE);
+	but_draw_setka.ShowWindow(SW_HIDE);
+	st_num_izo.ShowWindow(SW_HIDE);
 }
 
 
 void CDeloneDlg::OnBnClickedButton2()
 {
 	// TODO: добавьте свой код обработчика уведомлений
+	UpdateData();
 	manyTriag.do_triag = false;
 	manyTriag.my_line.clear();
 	manyTriag.my_point.clear();
@@ -344,6 +392,13 @@ void CDeloneDlg::OnBnClickedButton2()
 	teta_ell.ShowWindow(SW_SHOW);
 	str_e_ell.ShowWindow(SW_SHOW);
 	str_teta_ell.ShowWindow(SW_SHOW);
+
+	fi_ell = manyTriag.ells[manyTriag.cur_ell].fi_pot;
+
+	st_fi_ell.ShowWindow(SW_SHOW);
+	ed_fi_ell.ShowWindow(SW_SHOW);
+
+	UpdateData(FALSE);
 }
 
 BOOL CDeloneDlg::PreTranslateMessage(MSG* pMsg)
@@ -362,6 +417,8 @@ BOOL CDeloneDlg::PreTranslateMessage(MSG* pMsg)
 			teta_ell.ShowWindow(SW_HIDE);
 			str_e_ell.ShowWindow(SW_HIDE);
 			str_teta_ell.ShowWindow(SW_HIDE);
+			st_fi_ell.ShowWindow(SW_HIDE);
+			ed_fi_ell.ShowWindow(SW_HIDE);
 
 			return TRUE;                    // DO NOT process further
 		}
@@ -380,6 +437,8 @@ BOOL CDeloneDlg::PreTranslateMessage(MSG* pMsg)
 				teta_ell.ShowWindow(SW_HIDE);
 				str_e_ell.ShowWindow(SW_HIDE);
 				str_teta_ell.ShowWindow(SW_HIDE);
+				st_fi_ell.ShowWindow(SW_HIDE);
+				ed_fi_ell.ShowWindow(SW_HIDE);
 				Invalidate(FALSE);
 			}
 			return TRUE;                    // DO NOT process further
@@ -408,6 +467,7 @@ void CDeloneDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 void CDeloneDlg::OnCbnSelchangeCombo1()
 {
 	// TODO: добавьте свой код обработчика уведомлений
+	UpdateData();
 	manyTriag.do_triag = false;
 	manyTriag.my_line.clear();
 	manyTriag.my_point.clear();
@@ -422,9 +482,53 @@ void CDeloneDlg::OnCbnSelchangeCombo1()
 	manyTriag.add_ellips = true;
 	e_ell.SetPos(manyTriag.ells[manyTriag.cur_ell].e * 100);
 	teta_ell.SetPos(manyTriag.ells[manyTriag.cur_ell].teta * 100 * M_PI / 180);
+	fi_ell = manyTriag.ells[manyTriag.cur_ell].fi_pot;
 	Invalidate(FALSE);
 	e_ell.ShowWindow(SW_SHOW);
 	teta_ell.ShowWindow(SW_SHOW);
 	str_e_ell.ShowWindow(SW_SHOW);
 	str_teta_ell.ShowWindow(SW_SHOW);
+	st_fi_ell.ShowWindow(SW_SHOW);
+	ed_fi_ell.ShowWindow(SW_SHOW);
+	UpdateData(FALSE);
+}
+
+void CDeloneDlg::OnCancel()
+{
+	// TODO: добавьте специализированный код или вызов базового класса
+	DeleteCriticalSection(&potencial.cs);
+	CDialogEx::OnCancel();
+}
+
+
+void CDeloneDlg::OnEnChangeEdit9()
+{
+	// TODO:  Если это элемент управления RICHEDIT, то элемент управления не будет
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// функция и вызов CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Добавьте код элемента управления
+	UpdateData();
+	manyTriag.ells[manyTriag.cur_ell].fi_pot = fi_ell;
+	UpdateData(FALSE);
+}
+
+
+void CDeloneDlg::OnBnClickedButton3()
+{
+	// TODO: добавьте свой код обработчика уведомлений
+	manyTriag.draw_setka = !manyTriag.draw_setka;
+	if (!manyTriag.draw_setka)
+		but_draw_setka.SetWindowTextW(L"Показать сетку");
+	else 
+		but_draw_setka.SetWindowTextW(L"Скрыть сетку");
+}
+
+
+void CDeloneDlg::OnBnClickedButton4()
+{
+	// TODO: добавьте свой код обработчика уведомлений
+	UpdateData();
+	potencial.FindIzoline(num_izoline + 1);
 }
