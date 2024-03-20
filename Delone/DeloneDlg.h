@@ -31,7 +31,6 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-//	picTriag oneTriag;
 	int N;
 	double error;
 	afx_msg void OnBnClickedButton1();
@@ -42,7 +41,6 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	UINT_PTR timer;
 	HANDLE my_thread;
-//	virtual void OnCancel();
 	CRITICAL_SECTION cs;
 	double step_fi;
 	double step_setka;
@@ -51,7 +49,6 @@ public:
 	afx_msg void OnBnClickedRadio2();
 	bool rekkur;
 	afx_msg void OnBnClickedButton2();
-//	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	CSliderCtrl e_ell;
 	CSliderCtrl teta_ell;

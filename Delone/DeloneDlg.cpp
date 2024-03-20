@@ -455,8 +455,10 @@ void CDeloneDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	if (manyTriag.cur_ell == 0 || !manyTriag.add_ellips) return;
 	int position_e = e_ell.GetPos();
 	int position_teta = teta_ell.GetPos();
+	double cur_fi = manyTriag.ells[manyTriag.cur_ell].fi_pot;
 	my_ellipse cur(manyTriag.ells[manyTriag.cur_ell].center, manyTriag.ells[manyTriag.cur_ell].a, (double)position_e / 100, (double)position_teta / 100 * 180. / M_PI);
 	if (!manyTriag.goodEll()) return;
+	cur.fi_pot = cur_fi;
 	manyTriag.ells[manyTriag.cur_ell] = cur;
 
 	Invalidate(FALSE);

@@ -228,7 +228,7 @@ triangulation::triangulation(int my_N, double my_error)
 triangulation::triangulation(std::vector<my_ellipse> ell, double stepfi, double step_setka, double fi_okr)
 {
     ells = ell;
-    error = 1e-3;
+    error = 1e-6;
     InitializeCriticalSection(&csTriag);
 
     my_point.push_back(point(0, 0, sverh));
@@ -573,52 +573,31 @@ void galerkin::FindIzoline()
         {
             pt.clear();
             //point 1 and point 2
-            if ((fic > tri.p1.fi && fic < tri.p2.fi)
-                || (fic < tri.p1.fi && fic > tri.p2.fi))
+            if ((fic >= tri.p1.fi && fic <= tri.p2.fi)
+                || (fic <= tri.p1.fi && fic >= tri.p2.fi))
             {
                 x = izox(tri.p1, tri.p2, fic);
                 y = izoy(tri.p1, tri.p2, fic);
                 pt.push_back(point(x, y, add));
             }
-            /*else
-                if (fic <= tri.p1.fi && fic >= tri.p2.fi)
-                {
-                    x = izox(tri.p2, tri.p1, fic);
-                    y = izoy(tri.p2, tri.p1, fic);
-                    pt.push_back(point(x, y, add));
-                }*/
 
             //point 1 and point 3
-            if ((fic > tri.p1.fi && fic < tri.p3.fi)
-                || (fic < tri.p1.fi && fic > tri.p3.fi))
+            if ((fic >= tri.p1.fi && fic <= tri.p3.fi)
+                || (fic <= tri.p1.fi && fic >= tri.p3.fi))
             {
                 x = izox(tri.p1, tri.p3, fic);
                 y = izoy(tri.p1, tri.p3, fic);
                 pt.push_back(point(x, y, add));
             }
-            /*else
-                if (fic <= tri.p1.fi && fic >= tri.p3.fi)
-                {
-                    x = izox(tri.p3, tri.p1, fic);
-                    y = izoy(tri.p3, tri.p1, fic);
-                    pt.push_back(point(x, y, add));
-                }*/
 
             //point 2 and point 3
-            if ((fic > tri.p3.fi && fic < tri.p2.fi)
-                || (fic < tri.p3.fi && fic > tri.p2.fi))
+            if ((fic >= tri.p3.fi && fic <= tri.p2.fi)
+                || (fic <= tri.p3.fi && fic >= tri.p2.fi))
             {
                 x = izox(tri.p3, tri.p2, fic);
                 y = izoy(tri.p3, tri.p2, fic);
                 pt.push_back(point(x, y, add));
             }
-            //else
-            //    if (fic <= tri.p3.fi && fic >= tri.p2.fi)
-            //    {
-            //        x = izox(tri.p2, tri.p3, fic);
-            //        y = izoy(tri.p2, tri.p3, fic);
-            //        pt.push_back(point(x, y, add));
-            //    }
 
             EnterCriticalSection(&cs);
             if (pt.size() == 2)
