@@ -164,9 +164,22 @@ void picTriag::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 	if (draw_pt)
 	{
+		FontFamily my_font_family(L"Arial");
+		Gdiplus::Font my_font(&my_font_family, 14, FontStyleRegular, UnitPixel);
+		SolidBrush brush_font(Color::Black);
+		PointF pt;
+		wchar_t number[4];
 		double rad_pt = (xMax - xMin + yMax - yMin) / 400;
+		int iter = 0;
 		for (auto n : my_point)
+		{
 			DrawKrug(draw_in_buffer, rad_pt, n, r_brush, matr);
+			pt = PointF(n.x, n.y);
+			matr.TransformPoints(&pt);
+			swprintf_s(number, L"%d", iter);
+			draw_in_buffer.DrawString(number, -1, &my_font, pt, &brush_font);
+			iter++;
+		}
 	}
 
 	if (N == 3 && regim)

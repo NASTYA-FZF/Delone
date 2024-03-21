@@ -256,7 +256,7 @@ DWORD __stdcall findTriag(PVOID p)
 
 	if (!my->rekkur) my->my_delone.delone_triag();
 	else my->my_delone.rekkurent_delone_triag(my->step_setka);
-	my->potencial.Set(my->my_delone.GetPoint(), my->my_delone.GetTriangle(), my->num_izoline + 1);
+	my->potencial.Set(my->my_delone.GetPoint(), my->my_delone.GetTriangle(), my->num_izoline);
 	my->potencial.FindFi();
 	return 0;
 }
@@ -540,5 +540,5 @@ void CDeloneDlg::OnBnClickedButton4()
 {
 	// TODO: добавьте свой код обработчика уведомлений
 	UpdateData();
-	potencial.FindIzoline(num_izoline + 1);
+	potencial.FindIzoline(num_izoline);
 }

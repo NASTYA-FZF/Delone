@@ -1,6 +1,7 @@
 #include "pch.h"
 #define _USE_MATH_DEFINES
 #include "my_triag.h"
+#include <fstream>
 using namespace std;
 
 std::vector<point> gen_point(int N, double error, double left_x, double right_x, double top_y, double bottom_y)
@@ -141,16 +142,16 @@ void kazf(vector<vector<double>> a, vector<double> b, vector<double>& x)
     int nn = a[0].size();
     int ny = a.size();
 
-    double eps = 1.e-9f;
+    double eps = 1.e-8f;
     //float s;
     int i, j, k;
     double s1, s2, fa1, t;
     vector<double> x1(x.size());
 
-    x[0] = 0.5f;
-    for (i = 1; i < nn; i++)  x[i] = 0.f;
+    x[0] = 0.5;
+    for (i = 1; i < nn; i++)  x[i] = 0.;
 
-    s1 = s2 = 1.f;
+    s1 = s2 = 1.;
     while (s1 > eps * s2)
     {
         for (i = 0; i < nn; i++) x1[i] = x[i];
@@ -263,7 +264,7 @@ triangulation::triangulation(std::vector<my_ellipse> ell, double stepfi, double 
             }
         }
 
-        for (double fi = 0.; fi <= 2 * M_PI + stepfi * 4; fi += stepfi * 3)
+        for (double fi = 0.; fi < 2 * M_PI; fi += stepfi * 3)
         {
             na_el = el.koordnew(fi);
             my_point.push_back(point(na_el.x, na_el.y, add));
@@ -547,18 +548,23 @@ void galerkin::SetTriagPoint()
     vector<int> my_num;
     for (int i = 0; i < Fij.size(); i++)
     {
-        my_point[i + first].fi = Fij[i];
+        my_point[i + first].fi = -Fij[i];
         my_num = my_point[i + first].number_triag;
         for (int j = 0; j < my_num.size(); j++)
         {
             if (my_triag[my_num[j]].p1 == my_point[i + first])
-                my_triag[my_num[j]].p1.fi = Fij[i];
+                my_triag[my_num[j]].p1.fi = -Fij[i];
             if (my_triag[my_num[j]].p2 == my_point[i + first])
-                my_triag[my_num[j]].p2.fi = Fij[i];
+                my_triag[my_num[j]].p2.fi = -Fij[i];
             if (my_triag[my_num[j]].p3 == my_point[i + first])
-                my_triag[my_num[j]].p3.fi = Fij[i];
+                my_triag[my_num[j]].p3.fi = -Fij[i];
         }
     }
+
+    ofstream out("fi.txt");
+    for (int i = 0; i < my_point.size(); i++)
+        out << i << ") " << my_point[i].fi << endl;
+    out.close();
 }
 
 void galerkin::FindIzoline()
@@ -657,12 +663,12 @@ void galerkin::FindPower()
 
 double galerkin::izox(point pt1, point pt2, double ficonst)
 {
-    return pt2.x - fabs(pt2.fi - ficonst) * ((pt2.x - pt1.x) / fabs(pt2.fi - pt1.fi));;
+    return pt2.x - (pt2.fi - ficonst) * ((pt2.x - pt1.x) / (pt2.fi - pt1.fi));;
 }
 
 double galerkin::izoy(point pt1, point pt2, double ficonst)
 {
-    return pt2.y - fabs(pt2.fi - ficonst) * ((pt2.y - pt1.y) / fabs(pt2.fi - pt1.fi));
+    return pt2.y - (pt2.fi - ficonst) * ((pt2.y - pt1.y) / (pt2.fi - pt1.fi));
 }
 
 galerkin::galerkin(std::vector<point> pts, std::vector<triangle> trings, int num_fi_const)
@@ -876,7 +882,10 @@ void galerkin::SetFiConst(int num_izoline)
     }
     fi_const.clear();
 
-    for (double my_fi = fi_min; my_fi < fi_max; my_fi += (fi_max - fi_min) / num_izoline)
+    double step = (fi_max - fi_min) / num_izoline;
+    double new_step = (fi_max - fi_min - 2 * step) / num_izoline;
+
+    for (double my_fi = fi_min + step; my_fi < fi_max - step; my_fi += new_step)
         fi_const.push_back(my_fi);
 }
 
