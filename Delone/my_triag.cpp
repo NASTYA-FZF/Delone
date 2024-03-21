@@ -141,7 +141,7 @@ void kazf(vector<vector<double>> a, vector<double> b, vector<double>& x)
     int nn = a[0].size();
     int ny = a.size();
 
-    double eps = 1.e-6f;
+    double eps = 1.e-9f;
     //float s;
     int i, j, k;
     double s1, s2, fa1, t;
@@ -574,35 +574,83 @@ void galerkin::FindIzoline()
             pt.clear();
             //point 1 and point 2
             if ((fic >= tri.p1.fi && fic <= tri.p2.fi)
-                || (fic <= tri.p1.fi && fic >= tri.p2.fi))
+                /*|| (fic <= tri.p1.fi && fic >= tri.p2.fi)*/)
             {
                 x = izox(tri.p1, tri.p2, fic);
                 y = izoy(tri.p1, tri.p2, fic);
                 pt.push_back(point(x, y, add));
             }
+            else
+                if (/*(fic >= tri.p1.fi && fic <= tri.p2.fi)
+                    || */(fic <= tri.p1.fi && fic >= tri.p2.fi))
+                {
+                    x = izox(tri.p2, tri.p1, fic);
+                    y = izoy(tri.p2, tri.p1, fic);
+                    pt.push_back(point(x, y, add));
+                }
 
             //point 1 and point 3
             if ((fic >= tri.p1.fi && fic <= tri.p3.fi)
-                || (fic <= tri.p1.fi && fic >= tri.p3.fi))
+                /*|| (fic <= tri.p1.fi && fic >= tri.p3.fi)*/)
             {
                 x = izox(tri.p1, tri.p3, fic);
                 y = izoy(tri.p1, tri.p3, fic);
                 pt.push_back(point(x, y, add));
             }
+            else
+                if (/*(fic >= tri.p1.fi && fic <= tri.p3.fi)
+                    || */(fic <= tri.p1.fi && fic >= tri.p3.fi))
+                {
+                    x = izox(tri.p3, tri.p1, fic);
+                    y = izoy(tri.p3, tri.p1, fic);
+                    pt.push_back(point(x, y, add));
+                }
 
             //point 2 and point 3
             if ((fic >= tri.p3.fi && fic <= tri.p2.fi)
-                || (fic <= tri.p3.fi && fic >= tri.p2.fi))
+                /*|| (fic <= tri.p3.fi && fic >= tri.p2.fi)*/)
             {
                 x = izox(tri.p3, tri.p2, fic);
                 y = izoy(tri.p3, tri.p2, fic);
                 pt.push_back(point(x, y, add));
             }
+            else
+                if (/*(fic >= tri.p3.fi && fic <= tri.p2.fi)
+                    || */(fic <= tri.p3.fi && fic >= tri.p2.fi))
+                {
+                    x = izox(tri.p2, tri.p3, fic);
+                    y = izoy(tri.p2, tri.p3, fic);
+                    pt.push_back(point(x, y, add));
+                }
 
             EnterCriticalSection(&cs);
             if (pt.size() == 2)
                 izoline.push_back(line(pt[0], pt[1]));
             LeaveCriticalSection(&cs);
+        }
+    }
+}
+
+void galerkin::FindPower()
+{
+    double step = 0.03, A, B, dlina = step * 5;
+    point pt;
+    for (double x = 0; x < 1; x += step)
+    {
+        for (double y = 0; y < 1; y += step)
+        {
+            pt = point(x, y, add);
+            for (auto tri : my_triag)
+            {
+                if (tri.VnutTriag(pt))
+                {
+                    A = Aplos(tri.p1, tri.p2, tri.p3);
+                    B = Bplos(tri.p1, tri.p2, tri.p3);
+                    power.push_back(line(pt, point(pt.x + A * dlina, pt.y + B * dlina, add)));
+                    power.push_back(line(pt, point(pt.x - A * dlina, pt.y - B * dlina, add)));
+                    break;
+                }
+            }
         }
     }
 }
@@ -677,9 +725,9 @@ void galerkin::Set(std::vector<point> pts, std::vector<triangle> trings, int num
     Rj = Fij = vector<double>(count_not_granica);
     fi_const.clear();
     izoline.clear();
-
-    for (double my_fi = fi_min; my_fi < fi_max; my_fi += (fi_max - fi_min) / num_fi_const)
-        fi_const.push_back(my_fi);
+    num_izoline = num_fi_const;
+    //for (double my_fi = fi_min; my_fi < fi_max; my_fi += (fi_max - fi_min) / num_fi_const)
+    //    fi_const.push_back(my_fi);
 }
 
 ij galerkin::two_point(point pt1, point pt2, std::vector<int>& num_triag)
@@ -799,12 +847,18 @@ void galerkin::FindFi()
     }
     kazf(Aij, Rj, Fij);
     SetTriagPoint();
-    FindIzoline();
+    FindIzoline(num_izoline);
+    //FindPower();
 }
 
 std::vector<line> galerkin::GetIzoline()
 {
     return izoline;
+}
+
+std::vector<line> galerkin::GetPower()
+{
+    return power;
 }
 
 int galerkin::GetNumIzoline()
@@ -830,4 +884,19 @@ void galerkin::FindIzoline(int num_izoline)
 {
     SetFiConst(num_izoline);
     FindIzoline();
+}
+
+bool triangle::VnutTriag(point pt)
+{
+    bool res = false;
+
+    if ((pt.x > p1.x && (pt.x < p2.x || pt.x < p3.x))
+        || (pt.x > p2.x && (pt.x < p1.x || pt.x < p3.x))
+        || (pt.x > p3.x && (pt.x < p2.x || pt.x < p1.x)))
+        if ((pt.y > p1.y && (pt.y < p2.y || pt.y < p3.y))
+            || (pt.y > p2.y && (pt.y < p1.y || pt.y < p3.y))
+            || (pt.y > p3.y && (pt.y < p2.y || pt.y < p1.y)))
+            res = true;
+
+    return res;
 }

@@ -47,6 +47,7 @@ struct triangle
 	point centerOpis;
 	status_triag st_tr;
 	double S;
+	bool VnutTriag(point pt);
 };
 
 struct my_ellipse
@@ -160,8 +161,9 @@ class galerkin
 	int count_not_granica;
 	std::vector<std::vector<double>> Aij;
 	std::vector<double> Rj, Fij;
-	std::vector<line> izoline;
+	std::vector<line> izoline, power;
 	std::vector<double> fi_const;
+	int num_izoline;
 
 protected:
 
@@ -174,6 +176,8 @@ protected:
 	double izoy(point pt1, point pt2, double ficonst);
 
 	void FindIzoline();
+
+	void FindPower();
 
 public:
 	CRITICAL_SECTION cs;
@@ -205,6 +209,8 @@ public:
 	void FindFi();
 
 	std::vector<line> GetIzoline();
+
+	std::vector<line> GetPower();
 
 	int GetNumIzoline();
 

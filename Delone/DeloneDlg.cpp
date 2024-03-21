@@ -24,8 +24,8 @@ CDeloneDlg::CDeloneDlg(CWnd* pParent /*=nullptr*/)
 	, error(1e-3)
 	, step_fi(0.1)
 	, step_setka(0.1)
-	, fi_okr(1)
-	, num_izoline(0)
+	, fi_okr(0)
+	, num_izoline(5)
 	, fi_ell(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -107,11 +107,11 @@ BOOL CDeloneDlg::OnInitDialog()
 	srand(time(NULL));
 
 	my_ellipse add_ell(point(my_delone.centerOkr.x, my_delone.centerOkr.y, sverh), my_delone.radiusOkr, 0, 0);
-	add_ell.fi_pot = 1;
+	add_ell.fi_pot = 0;
 
 	manyTriag.ells.push_back(add_ell);
 	e_ell.SetRange(0, 90);
-	e_ell.SetPos(50);
+	e_ell.SetPos(70);
 	teta_ell.SetRange(0, M_PI * 100);
 	teta_ell.SetPos(0);
 
@@ -130,6 +130,7 @@ BOOL CDeloneDlg::OnInitDialog()
 	add_ell.fi_pot = 10;
 	manyTriag.ells.push_back(add_ell);
 	add_ell.center.x = 0.6;
+	add_ell.center.y = 0.6;
 	add_ell.fi_pot = -10;
 	manyTriag.ells.push_back(add_ell);
 	number_ell.InsertString(-1, L"1");
@@ -211,6 +212,8 @@ void CDeloneDlg::OnBnClickedButton1()
 			MessageBox(L"Нажмите Enter!", L"Оповещение!");
 			return;
 		}
+		manyTriag.my_izoline.clear();
+		manyTriag.my_power.clear();
 		manyTriag.do_triag = true;
 		std::vector<my_ellipse> el(manyTriag.ells);
 		el.erase(el.begin());
@@ -239,6 +242,7 @@ void CDeloneDlg::OnTimer(UINT_PTR nIDEvent)
 
 	EnterCriticalSection(&potencial.cs);
 	manyTriag.my_izoline = potencial.GetIzoline();
+	manyTriag.my_power = potencial.GetPower();
 	LeaveCriticalSection(&potencial.cs);
 
 
@@ -343,6 +347,8 @@ void CDeloneDlg::OnBnClickedButton2()
 	manyTriag.do_triag = false;
 	manyTriag.my_line.clear();
 	manyTriag.my_point.clear();
+	manyTriag.my_izoline.clear();
+	manyTriag.my_power.clear();
 
 	DWORD exit;
 	GetExitCodeThread(my_thread, &exit);
@@ -473,6 +479,8 @@ void CDeloneDlg::OnCbnSelchangeCombo1()
 	manyTriag.do_triag = false;
 	manyTriag.my_line.clear();
 	manyTriag.my_point.clear();
+	manyTriag.my_izoline.clear();
+	manyTriag.my_power.clear();
 
 	DWORD exit;
 	GetExitCodeThread(my_thread, &exit);

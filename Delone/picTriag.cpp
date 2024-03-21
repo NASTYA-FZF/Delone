@@ -120,7 +120,7 @@ void picTriag::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 	Matrix matr;
 
-	Pen p_black(Color::Black), p_gold(Color::Gold), p_purp(Color::Purple);
+	Pen p_black(Color::Black), p_gold(Color::Green), p_purp(Color::Purple);
 	SolidBrush r_brush(Color::Red);
 
 	if (!regim && !do_triag) DrawMyEllipse(draw_in_buffer, matr);
@@ -148,6 +148,17 @@ void picTriag::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 			pt[1] = PointF(n.second.x, n.second.y);
 			matr.TransformPoints(pt, 2);
 			draw_in_buffer.DrawLine(&p_purp, pt[0], pt[1]);
+		}
+	}
+
+	if (!my_power.empty())
+	{
+		for (auto n : my_power)
+		{
+			pt[0] = PointF(n.first.x, n.first.y);
+			pt[1] = PointF(n.second.x, n.second.y);
+			matr.TransformPoints(pt, 2);
+			draw_in_buffer.DrawLine(&p_gold, pt[0], pt[1]);
 		}
 	}
 
