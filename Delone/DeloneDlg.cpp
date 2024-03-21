@@ -127,11 +127,11 @@ BOOL CDeloneDlg::OnInitDialog()
 	ed_setka.ShowWindow(SW_HIDE);
 
 	add_ell = my_ellipse(point(0.4, 0.4, add), 0.05, (double)e_ell.GetPos() / 100, (double)teta_ell.GetPos() / 100 * 180. / M_PI);
-	add_ell.fi_pot = 10;
+	add_ell.fi_pot = 1;
 	manyTriag.ells.push_back(add_ell);
 	add_ell.center.x = 0.6;
-	add_ell.center.y = 0.6;
-	add_ell.fi_pot = -10;
+	//add_ell.center.y = 0.6;
+	add_ell.fi_pot = -1;
 	manyTriag.ells.push_back(add_ell);
 	number_ell.InsertString(-1, L"1");
 	number_ell.InsertString(-1, L"2");

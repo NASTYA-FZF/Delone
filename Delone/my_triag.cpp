@@ -657,12 +657,12 @@ void galerkin::FindPower()
 
 double galerkin::izox(point pt1, point pt2, double ficonst)
 {
-    return pt2.x - (pt2.fi - ficonst) * ((pt2.x - pt1.x) / (pt2.fi - pt1.fi));;
+    return pt2.x - fabs(pt2.fi - ficonst) * ((pt2.x - pt1.x) / fabs(pt2.fi - pt1.fi));;
 }
 
 double galerkin::izoy(point pt1, point pt2, double ficonst)
 {
-    return pt2.y - (pt2.fi - ficonst) * ((pt2.y - pt1.y) / (pt2.fi - pt1.fi));
+    return pt2.y - fabs(pt2.fi - ficonst) * ((pt2.y - pt1.y) / fabs(pt2.fi - pt1.fi));
 }
 
 galerkin::galerkin(std::vector<point> pts, std::vector<triangle> trings, int num_fi_const)
