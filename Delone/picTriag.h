@@ -20,7 +20,8 @@ protected:
 public:
 	virtual void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
 	//std::set<line> my_line;
-	std::vector<line> my_line, my_izoline, my_power;
+	std::vector<line> my_line, my_izoline;
+	std::vector<std::vector<line>> my_power;
 	std::vector<point> my_point;
 	ULONG_PTR token;
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);

@@ -264,12 +264,17 @@ triangulation::triangulation(std::vector<my_ellipse> ell, double stepfi, double 
             }
         }
 
-        for (double fi = 0.; fi < 2 * M_PI; fi += stepfi * 3)
+        for (double fi = 0.; fi < 2 * M_PI; fi += stepfi * 4)
         {
             na_el = el.koordnew(fi);
             my_point.push_back(point(na_el.x, na_el.y, add));
             my_point.back().fi = el.fi_pot;
             my_point.back().is_granica = granica;
+
+            na_el = el.koordnew(fi / 2);
+            pt_power.push_back(point(na_el.x, na_el.y, add));
+            pt_power.back().fi = el.fi_pot;
+            pt_power.back().is_granica = granica;
         }
     }
 
@@ -278,6 +283,10 @@ triangulation::triangulation(std::vector<my_ellipse> ell, double stepfi, double 
         my_point.push_back(point(radiusOkr * cos(fi) + centerOkr.x + myrand(-error, error), radiusOkr * sin(fi) + centerOkr.y + myrand(-error, error), add));
         my_point.back().fi = fi_okr;
         my_point.back().is_granica = granica;
+
+        pt_power.push_back(point(radiusOkr * cos(fi / 2) + centerOkr.x + myrand(-error, error), radiusOkr * sin(fi / 2) + centerOkr.y + myrand(-error, error), add));
+        pt_power.back().is_granica = granica;
+        pt_power.back().fi = fi_okr;
     }
 }
 
@@ -639,26 +648,89 @@ void galerkin::FindIzoline()
 
 void galerkin::FindPower()
 {
-    double step = 0.03, A, B, dlina = step * 5;
-    point pt;
+    //double step = 0.02, A, B, dlina = 0.1, a, b, c;
+    //int num, sign;
+    //std::vector<line> pow;
+    //point p;
+    //for (int j = 0; j < pt_power.size(); j += 1)
+    //{
+    //    p = pt_power[j];
+    //    num = FromTriangle(p);
+    //    //pow.clear();
+    //    EnterCriticalSection(&cs);
+    //    power.push_back(vector<line>());
+    //    LeaveCriticalSection(&cs);
+    //    while (num >= 0)
+    //    {
+    //        //a = radiusOp(p, my_triag[num].p1);
+    //        //b = radiusOp(p, my_triag[num].p2);
+    //        //c = radiusOp(p, my_triag[num].p3);
+
+    //        //if (a < b && a < c) p.fi = my_triag[num].p1.fi;
+    //        //if (b < a && b < c) p.fi = my_triag[num].p2.fi;
+    //        //if (c < a && c < b) p.fi = my_triag[num].p3.fi;
+
+    //        //p.fi = (my_triag[num].p1.fi + my_triag[num].p2.fi + my_triag[num].p3.fi) / 3;
+
+    //        A = AplosFi(my_triag[num].p1, my_triag[num].p2, my_triag[num].p3);
+    //        B = BplosFi(my_triag[num].p1, my_triag[num].p2, my_triag[num].p3);
+
+    //        //if (p.fi > 0) sign = 1;
+    //        //else sign = -1;
+    //        sign = -1;
+
+    //        EnterCriticalSection(&cs);
+    //        power.back().push_back(line(p, point(p.x + sign * A * dlina, p.y + sign * B * dlina, pt_new)));
+    //        LeaveCriticalSection(&cs);
+    //        p = power.back().back().second;
+
+    //        num = FromTriangle(p);
+    //        if (num == -1) power.back().pop_back();
+    //    }
+    //    //EnterCriticalSection(&cs);
+    //    //power.push_back(pow);
+    //    //LeaveCriticalSection(&cs);
+    //}
+
+    double step = 0.005, dlinaA = 0.09, dlinaB = 0.1;
+    double A, B;
+    int num;
+    std::vector<line> pow;
+    double a;
     for (double x = 0; x < 1; x += step)
     {
         for (double y = 0; y < 1; y += step)
         {
-            pt = point(x, y, add);
-            for (auto tri : my_triag)
-            {
-                if (tri.VnutTriag(pt))
-                {
-                    A = Aplos(tri.p1, tri.p2, tri.p3);
-                    B = Bplos(tri.p1, tri.p2, tri.p3);
-                    power.push_back(line(pt, point(pt.x + A * dlina, pt.y + B * dlina, add)));
-                    power.push_back(line(pt, point(pt.x - A * dlina, pt.y - B * dlina, add)));
-                    break;
-                }
-            }
+            num = FromTriangle(point(x, y, add));
+            if (num == -1) continue;
+            A = AplosFi(my_triag[num].p1, my_triag[num].p2, my_triag[num].p3);
+            B = BplosFi(my_triag[num].p1, my_triag[num].p2, my_triag[num].p3);
+            //if (A * dlinaA > step / 100) dlinaA -= 0.001;
+            //if (A * dlinaA < step / 1000) dlinaA += 0.001;
+            //if (B * dlinaB > 0.0001) dlinaB = 0.001;
+            //if (B * dlinaB < 0.00005) dlinaB = 0.5;
+            pow.push_back(line(point(x, y, add), point(x - A * dlinaA, y - B * dlinaA, add)));
+            pow.push_back(line(point(x, y, add), point(x + A * dlinaA, y + B * dlinaA, add)));
+
+            //a = radiusOp(pow.back().first, pow.back().second);
         }
     }
+    EnterCriticalSection(&cs);
+    power.push_back(pow);
+    LeaveCriticalSection(&cs);
+}
+
+int galerkin::FromTriangle(point pnt)
+{
+    for (int i = 0; i < my_triag.size(); i++)
+    {
+        double a = (my_triag[i].p1.x - pnt.x) * (my_triag[i].p2.y - my_triag[i].p1.y) - (my_triag[i].p2.x - my_triag[i].p1.x) * (my_triag[i].p1.y - pnt.y);
+        double b = (my_triag[i].p2.x - pnt.x) * (my_triag[i].p3.y - my_triag[i].p2.y) - (my_triag[i].p3.x - my_triag[i].p2.x) * (my_triag[i].p2.y - pnt.y);
+        double c = (my_triag[i].p3.x - pnt.x) * (my_triag[i].p1.y - my_triag[i].p3.y) - (my_triag[i].p1.x - my_triag[i].p3.x) * (my_triag[i].p3.y - pnt.y);
+
+        if ((a >= 0 && b >= 0 && c >= 0) || (a <= 0 && b <= 0 && c <= 0)) return i;
+    }
+    return -1;
 }
 
 double galerkin::izox(point pt1, point pt2, double ficonst)
@@ -703,7 +775,7 @@ galerkin::galerkin(std::vector<point> pts, std::vector<triangle> trings, int num
         fi_const.push_back(my_fi);
 }
 
-void galerkin::Set(std::vector<point> pts, std::vector<triangle> trings, int num_fi_const)
+void galerkin::Set(std::vector<point> pts, std::vector<triangle> trings, int num_fi_const, std::vector<point> pt_pow)
 {
     my_point = pts;
     my_triag = trings;
@@ -734,6 +806,14 @@ void galerkin::Set(std::vector<point> pts, std::vector<triangle> trings, int num
     num_izoline = num_fi_const;
     //for (double my_fi = fi_min; my_fi < fi_max; my_fi += (fi_max - fi_min) / num_fi_const)
     //    fi_const.push_back(my_fi);
+
+    pt_power = pt_pow;
+}
+
+void galerkin::clearvec()
+{
+    power.clear();
+    izoline.clear();
 }
 
 ij galerkin::two_point(point pt1, point pt2, std::vector<int>& num_triag)
@@ -795,6 +875,16 @@ double galerkin::Bplos(point pt1, point pt2, point pt3)
     return (pt2.x - pt1.x) * (pt3.z - pt1.z) - (pt2.z - pt1.z) * (pt3.x - pt1.x);
 }
 
+double galerkin::AplosFi(point pt1, point pt2, point pt3)
+{
+    return (pt2.y - pt1.y) * (pt3.fi - pt1.fi) - (pt3.y - pt1.y) * (pt2.fi - pt1.fi);
+}
+
+double galerkin::BplosFi(point pt1, point pt2, point pt3)
+{
+    return (pt2.x - pt1.x) * (pt3.fi - pt1.fi) - (pt2.fi - pt1.fi) * (pt3.x - pt1.x);
+}
+
 double galerkin::Striag(point pt1, point pt2, point pt3)
 {
     double ast = radiusOp(pt1, pt2);
@@ -854,7 +944,7 @@ void galerkin::FindFi()
     kazf(Aij, Rj, Fij);
     SetTriagPoint();
     FindIzoline(num_izoline);
-    //FindPower();
+    FindPower();
 }
 
 std::vector<line> galerkin::GetIzoline()
@@ -862,7 +952,7 @@ std::vector<line> galerkin::GetIzoline()
     return izoline;
 }
 
-std::vector<line> galerkin::GetPower()
+std::vector<std::vector<line>> galerkin::GetPower()
 {
     return power;
 }

@@ -153,12 +153,24 @@ void picTriag::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 	if (!my_power.empty())
 	{
-		for (auto n : my_power)
+		//for (auto n : my_power)
+		//{
+		//	pt[0] = PointF(n.first.x, n.first.y);
+		//	pt[1] = PointF(n.second.x, n.second.y);
+		//	matr.TransformPoints(pt, 2);
+		//	draw_in_buffer.DrawLine(&p_gold, pt[0], pt[1]);
+		//}
+		for (auto pow : my_power)
 		{
-			pt[0] = PointF(n.first.x, n.first.y);
-			pt[1] = PointF(n.second.x, n.second.y);
-			matr.TransformPoints(pt, 2);
-			draw_in_buffer.DrawLine(&p_gold, pt[0], pt[1]);
+			int stepn = 1;
+			for (int n = 0; n < pow.size(); n += stepn)
+			{
+				//if (n + stepn >= pow.size()) break;
+				pt[0] = PointF(pow[n].first.x, pow[n].first.y);
+				pt[1] = PointF(pow[n].second.x, pow[n].second.y);
+				matr.TransformPoints(pt, 2);
+				draw_in_buffer.DrawLine(&p_gold, pt[0], pt[1]);
+			}
 		}
 	}
 
@@ -167,18 +179,18 @@ void picTriag::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		FontFamily my_font_family(L"Arial");
 		Gdiplus::Font my_font(&my_font_family, 14, FontStyleRegular, UnitPixel);
 		SolidBrush brush_font(Color::Black);
-		PointF pt;
-		wchar_t number[4];
+		//PointF pt;
+		//wchar_t number[4];
 		double rad_pt = (xMax - xMin + yMax - yMin) / 400;
-		int iter = 0;
+		//int iter = 0;
 		for (auto n : my_point)
 		{
 			DrawKrug(draw_in_buffer, rad_pt, n, r_brush, matr);
-			pt = PointF(n.x, n.y);
-			matr.TransformPoints(&pt);
-			swprintf_s(number, L"%d", iter);
-			draw_in_buffer.DrawString(number, -1, &my_font, pt, &brush_font);
-			iter++;
+			//pt = PointF(n.x, n.y);
+			//matr.TransformPoints(&pt);
+			//swprintf_s(number, L"%d", iter);
+			//draw_in_buffer.DrawString(number, -1, &my_font, pt, &brush_font);
+			//iter++;
 		}
 	}
 

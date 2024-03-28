@@ -104,6 +104,7 @@ protected:
 public:
 	point centerOkr = point(0.5, 0.5, sverh);
 	double radiusOkr = 0.4;
+	std::vector<point> pt_power;
 
 	CRITICAL_SECTION csTriag;
 
@@ -156,12 +157,13 @@ enum ij
 
 class galerkin
 {
-	std::vector<point> my_point;
+	std::vector<point> my_point, pt_power;
 	std::vector<triangle> my_triag;
 	int count_not_granica;
 	std::vector<std::vector<double>> Aij;
 	std::vector<double> Rj, Fij;
-	std::vector<line> izoline, power;
+	std::vector<line> izoline;
+	std::vector<std::vector<line>> power;
 	std::vector<double> fi_const;
 	int num_izoline;
 
@@ -179,12 +181,15 @@ protected:
 
 	void FindPower();
 
+	int FromTriangle(point pnt);
+
 public:
 	CRITICAL_SECTION cs;
 
 	galerkin(std::vector<point> pts, std::vector<triangle> trings, int num_fi_const);
 
-	void Set(std::vector<point> pts, std::vector<triangle> trings, int num_fi_const);
+	void Set(std::vector<point> pts, std::vector<triangle> trings, int num_fi_const, std::vector<point> pt_pow);
+	void clearvec();
 
 	galerkin() {}
 
@@ -202,6 +207,10 @@ public:
 
 	double Bplos(point pt1, point pt2, point pt3);
 
+	double AplosFi(point pt1, point pt2, point pt3);
+
+	double BplosFi(point pt1, point pt2, point pt3);
+
 	double Striag(point pt1, point pt2, point pt3);
 
 	void Funcisosedj(point pti, point ptj, std::vector<int> num_triag, int row, int column);
@@ -210,7 +219,7 @@ public:
 
 	std::vector<line> GetIzoline();
 
-	std::vector<line> GetPower();
+	std::vector<std::vector<line>> GetPower();
 
 	int GetNumIzoline();
 

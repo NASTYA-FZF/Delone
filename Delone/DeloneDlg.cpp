@@ -23,7 +23,7 @@ CDeloneDlg::CDeloneDlg(CWnd* pParent /*=nullptr*/)
 	, N(3)
 	, error(1e-3)
 	, step_fi(0.1)
-	, step_setka(0.1)
+	, step_setka(0.05)
 	, fi_okr(0)
 	, num_izoline(5)
 	, fi_ell(0)
@@ -126,12 +126,12 @@ BOOL CDeloneDlg::OnInitDialog()
 	ed_di.ShowWindow(SW_HIDE);
 	ed_setka.ShowWindow(SW_HIDE);
 
-	add_ell = my_ellipse(point(0.4, 0.4, add), 0.05, (double)e_ell.GetPos() / 100, (double)teta_ell.GetPos() / 100 * 180. / M_PI);
-	add_ell.fi_pot = 1;
+	add_ell = my_ellipse(point(0.3, 0.4, add), 0.1, (double)e_ell.GetPos() / 100, (double)teta_ell.GetPos() / 100 * 180. / M_PI);
+	add_ell.fi_pot = 10;
 	manyTriag.ells.push_back(add_ell);
-	add_ell.center.x = 0.6;
-	//add_ell.center.y = 0.6;
-	add_ell.fi_pot = -1;
+	add_ell.center.x = 0.7;
+	add_ell.center.y = 0.6;
+	add_ell.fi_pot = -10;
 	manyTriag.ells.push_back(add_ell);
 	number_ell.InsertString(-1, L"1");
 	number_ell.InsertString(-1, L"2");
@@ -254,9 +254,10 @@ DWORD __stdcall findTriag(PVOID p)
 {
 	CDeloneDlg* my = (CDeloneDlg*)p;
 
+	my->potencial.clearvec();
 	if (!my->rekkur) my->my_delone.delone_triag();
 	else my->my_delone.rekkurent_delone_triag(my->step_setka);
-	my->potencial.Set(my->my_delone.GetPoint(), my->my_delone.GetTriangle(), my->num_izoline);
+	my->potencial.Set(my->my_delone.GetPoint(), my->my_delone.GetTriangle(), my->num_izoline, my->my_delone.pt_power);
 	my->potencial.FindFi();
 	return 0;
 }
@@ -361,7 +362,7 @@ void CDeloneDlg::OnBnClickedButton2()
 	{
 		manyTriag.cur_ell = manyTriag.ells.size();
 		my_ellipse add_ell(point(myrand(0, 1), myrand(0, 1), add), 0.05, (double)e_ell.GetPos() / 100, (double)teta_ell.GetPos() / 100 * 180. / M_PI);
-		add_ell.fi_pot = 1;
+		add_ell.fi_pot = 10;
 		manyTriag.ells.push_back(add_ell);
 		if (!manyTriag.goodEll())
 		{
