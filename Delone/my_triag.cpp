@@ -692,7 +692,7 @@ void galerkin::FindPower()
     //    //LeaveCriticalSection(&cs);
     //}
 
-    double step = 0.005, dlinaA = 0.09, dlinaB = 0.1;
+    double step = 0.01, dlinaA = 0.002, dlinaB = 0.1;
     double A, B;
     int num;
     std::vector<line> pow;
@@ -703,16 +703,13 @@ void galerkin::FindPower()
         {
             num = FromTriangle(point(x, y, add));
             if (num == -1) continue;
-            A = AplosFi(my_triag[num].p1, my_triag[num].p2, my_triag[num].p3);
+            A = -AplosFi(my_triag[num].p1, my_triag[num].p2, my_triag[num].p3);
             B = BplosFi(my_triag[num].p1, my_triag[num].p2, my_triag[num].p3);
-            //if (A * dlinaA > step / 100) dlinaA -= 0.001;
-            //if (A * dlinaA < step / 1000) dlinaA += 0.001;
-            //if (B * dlinaB > 0.0001) dlinaB = 0.001;
-            //if (B * dlinaB < 0.00005) dlinaB = 0.5;
+            a = sqrt(A * A + B * B);
+            A /= a;
+            B /= a;
             pow.push_back(line(point(x, y, add), point(x - A * dlinaA, y - B * dlinaA, add)));
             pow.push_back(line(point(x, y, add), point(x + A * dlinaA, y + B * dlinaA, add)));
-
-            //a = radiusOp(pow.back().first, pow.back().second);
         }
     }
     EnterCriticalSection(&cs);
